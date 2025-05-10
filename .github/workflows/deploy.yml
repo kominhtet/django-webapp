@@ -28,7 +28,18 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |
-        kubectl --insecure-skip-tls-verify \
-          set image deployment/django-app \
+        kubectl set image deployment/django-app \
           django-container=${{ secrets.DOCKER_USERNAME }}/django-app-name:latest \
           --namespace=web-apps
+
+    - name: Verify Deployment Rollout
+      run: |
+        kubectl rollout status deployment/django-app --namespace=web-apps --timeout=60s
+
+    - name: Debug on Rollout Failure
+      if: failure()
+      run: |
+        echo "Rollout failed. Fetching pod status..."
+        kubectl get pods -n web-apps
+        kubectl describe deployment django-app -n web-apps
+        kubectl logs --tail=50 -l app=django-app -n web-apps || true
