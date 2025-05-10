@@ -28,4 +28,4 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |
-        kubectl set image deployment/django-deployment django=${{ secrets.DOCKER_USERNAME }}/django-webapp:latest --namespace=web-apps
+        kubectl set image deployment/django-app django-container=${{ secrets.DOCKER_USERNAME }}/django-app-name:latest --namespace=web-apps
