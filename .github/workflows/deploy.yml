@@ -26,11 +26,9 @@ jobs:
         mkdir -p ~/.kube
         echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > ~/.kube/config
 
-    - name: Deploy to Kubernetes
+    - name: Apply Kubernetes Deployment
       run: |
-        kubectl set image deployment/django-app \
-          django-container=${{ secrets.DOCKER_USERNAME }}/django-app-name:latest \
-          --namespace=web-apps
+        kubectl apply -f django-deployment.yaml
 
     - name: Verify Deployment Rollout
       run: |
