@@ -9,26 +9,32 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      IMAGE_NAME: django-app-name
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+
+    - name: Set image tag to current timestamp
+      run: echo "IMAGE_TAG=$(date +%s)" >> $GITHUB_ENV
 
     - name: Log in to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     - name: Build and push Docker image
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/django-app-name:latest .
-        docker push ${{ secrets.DOCKER_USERNAME }}/django-app-name:latest
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+        docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
     - name: Set up Kubeconfig
       run: |
         mkdir -p ~/.kube
         echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > ~/.kube/config
 
-    - name: Apply Kubernetes Deployment
+    - name: Deploy to Kubernetes with dynamic image tag
       run: |
-        kubectl apply -f django-deployment.yaml
+        sed "s|REPLACE_IMAGE_TAG|${{ env.IMAGE_TAG }}|g" k8s/django-deployment.yaml | kubectl apply -f -
 
     - name: Verify Deployment Rollout
       run: |
